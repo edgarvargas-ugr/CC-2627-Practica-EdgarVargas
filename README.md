@@ -94,7 +94,46 @@ Cada servicio se despliega y escala de forma independiente, tiene una única res
 
 ## 5. Especificación de la API REST
 
-Todas las rutas van bajo `/api/v1`. Se muestra una versión sintética de los endpoints principales. En cada uno de los services se encontrará la especificación.
+Todas las rutas van bajo `/api/v1`. Se muestra una versión sintética de los endpoints principales. En el README de cada servicio se encuentra su especificación.
+
+| Servicio | Verbo | Ruta | Descripción |
+|---|---|---|---|
+| [`servicio-ingesta-mediciones`](services/servicio-ingesta-mediciones) | POST | `/Observation` | Recibir una medición (o un lote) |
+| | GET | `/Patient/{id}/observations` | Historial de mediciones (formato FHIR) |
+| [`servicio-gestion-pacientes`](services/servicio-gestion-pacientes) | POST | `/Patient` | Registrar un paciente |
+| | GET | `/Patient/{id}` | Consultar perfil |
+| | PUT | `/Patient/{id}/thresholds` | Definir umbrales personalizados |
+| | POST | `/Patient/{id}/related` | Asociar un cuidador o contacto |
+| [`servicio-evaluacion-mediciones`](services/servicio-evaluacion-mediciones) | GET | `/Patient/{id}/status` | Estado actual: normal, atención o urgente |
+| | GET | `/Patient/{id}/trend?days=7` | Tendencia frente a la línea base |
+| [`servicio-alertas`](services/servicio-alertas) | GET | `/alerts?patientId=&status=` | Listar alertas |
+| | GET | `/alerts/{id}` | Detalle y motivo de la alerta |
+
+Ejemplo de payload (umbrales personalizados):
+
+```json
+PUT /api/v1/Patient/p001/thresholds
+{
+  "spo2Min": 90,
+  "heartRateMin": 50,
+  "heartRateMax": 110,
+  "condition": "COPD"
+}
+```
+
+Ejemplo de payload (medición enviada por el dispositivo):
+
+```json
+POST /api/v1/measurements
+{
+  "patientId": "p001",
+  "deviceId": "watch-p001",
+  "timestamp": "2026-10-13T08:05:00Z",
+  "spo2": 94,
+  "heartRate": 72,
+  "wearTimeMinutes": 480
+}
+```
 
 ## 6. Gestión del proyecto
 

@@ -1,0 +1,8 @@
+# Docker / HAPI FHIR
+.env
+.env.*
+!.env.example
+data/
+target/
+*.log
+docker-compose.override.yml

@@ -12,10 +12,6 @@ assignees: ""
 **quiero** <!-- qué necesita hacer -->
 **para** <!-- qué valor o beneficio obtiene -->
 
-## Contexto
-
-<!-- Opcional: por qué es necesaria, enlaces al README o al diagrama de casos de uso. -->
-
 ## Criterios de aceptación
 
 <!-- Formato Dado / Cuando / Entonces. Cada criterio debe poder comprobarse. -->
@@ -42,10 +38,6 @@ assignees: ""
 - [ ] Pruebas unitarias / de integración
 - [ ] Documentación actualizada (README o `docs/`)
 - [ ] Revisado y fusionado mediante Pull Request
-
-## Fuera de alcance
-
-<!-- Qué NO incluye esta historia, para evitar que crezca. -->
 
 ## Notas
 

@@ -1,0 +1,15 @@
+# NodeJS
+node_modules/
+dist/
+build/
+.next/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Configuración local y secretos
+.env
+.env.*
+!.env.example
