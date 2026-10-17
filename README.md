@@ -76,14 +76,14 @@ Ya la nube garantiza el coste de conectividad, la latencia y la disponibilidad, 
 
 | Componente | Responsabilidad | Almacenamiento |
 |---|---|---|
-| `servicio-ingesta-mediciones` | Recibe mediciones, valida su calidad, las convierte en recursos FHIR para guardarlos y publica un evento | Servidor FHIR |
-| `servicio-evaluacion-mediciones` | Evalúa cada medición frente a los umbrales y la línea base; calcula estado y tendencia; | Caché (Redis) + FHIR (lectura) + DB (umbrales) |
-| `servicio-alertas` | Revisa el cache a ver si en los ultimos 5 minutos se genero una medición asociada a ese paciente que no cumpliera el umbral, de ser así se dispara el servicio de alertas. Decide a quién avisar y por qué canal | Base de datos de alertas |
-| `servicio-gestion-pacientes` | Gestiona pacientes, familiares y umbrales | Servidor FHIR + base de datos |
-| `front-app-web` | Aplicación web de seguimiento | App NodeJS |
-| `fhir-service` | Servidor FHIR que permite la gestión de recursos de interoperar con estandar internacional de datos | Docker FHIR Service |
+| [`servicio-ingesta-mediciones`](services/servicio-ingesta-medicamentos) | Recibe mediciones, valida su calidad, las convierte en recursos FHIR para guardarlos y publica un evento | Servidor FHIR |
+| [`servicio-evaluacion-mediciones`](services/servicio-evaluacion-mediciones) | Evalúa cada medición frente a los umbrales y la línea base; calcula estado y tendencia; | Caché (Redis) + FHIR (lectura) + DB (umbrales) |
+| [`servicio-alertas`](services/servicio-alertas) | Revisa el cache a ver si en los ultimos 5 minutos se genero una medición asociada a ese paciente que no cumpliera el umbral, de ser así se dispara el servicio de alertas. Decide a quién avisar y por qué canal | Base de datos de alertas |
+| [`servicio-gestion-pacientes`](services/servicio-gestion-pacientes) | Gestiona pacientes, familiares y umbrales | Servidor FHIR + base de datos |
+| [`front-app-web`](frontend) | Aplicación web de seguimiento | App NodeJS |
+| [`fhir-service`](services/fhir-service) | Servidor FHIR que permite la gestión de recursos de interoperar con estandar internacional de datos | Docker FHIR Service |
 | `api-gateway` | Gestionar seguridad y centralizar los endpoints expuestos a los usuarios de cada uno de los servicios | API Gateway |
-| `simulador-dispositivo-medicion` | Genera datos sintéticos del reloj (herramienta de pruebas, no es un microservicio) | — |
+| [`simulador-dispositivo-medicion`](simulador-dispositivo) | Genera datos sintéticos del reloj (herramienta de pruebas, no es un microservicio) | — |
 
 Cada servicio se despliega y escala de forma independiente, tiene una única responsabilidad y se comunica con los demás solo mediante API REST o eventos, sin compartir base de datos.
 
@@ -94,60 +94,7 @@ Cada servicio se despliega y escala de forma independiente, tiene una única res
 
 ## 5. Especificación de la API REST
 
-Todas las rutas van bajo `/api/v1`. Se muestra una versión sintética de los endpoints principales.
-
-### servicio-gestion-pacientes
-
-| Verbo | Ruta | Descripción |
-|---|---|---|
-| POST | `/Patient` | Registrar un paciente |
-| GET | `/Patient/{id}` | Consultar perfil |
-| PUT | `/Patient/{id}/thresholds` | Definir umbrales personalizados |
-| POST | `/Patient/{id}/related` | Asociar un cuidador o contacto |
-
-```json
-PUT /api/v1/Patient/p001/thresholds
-{
-  "spo2Min": 90,
-  "heartRateMin": 50,
-  "heartRateMax": 110,
-  "condition": "COPD"
-}
-```
-
-### servicio-ingesta-mediciones
-
-| Verbo | Ruta | Descripción |
-|---|---|---|
-| POST | `/Observation` | Recibir una medición (o un lote) |
-| GET | `/Patient/{id}/observations` | Historial de mediciones (formato FHIR) |
-
-```json
-POST /api/v1/measurements
-{
-  "patientId": "p001",
-  "deviceId": "watch-p001",
-  "timestamp": "2026-10-13T08:05:00Z",
-  "spo2": 94,
-  "heartRate": 72,
-  "wearTimeMinutes": 480
-}
-```
-
-### servicio-evaluacion-mediciones
-
-| Verbo | Ruta | Descripción |
-|---|---|---|
-| GET | `/Patient/{id}/status` | Estado actual: normal, atención o urgente |
-| GET | `/Patient/{id}/trend?days=7` | Tendencia frente a la línea base |
-
-### servicio-alertas
-
-| Verbo | Ruta | Descripción |
-|---|---|---|
-| GET | `/alerts?patientId=&status=` | Listar alertas |
-| GET | `/alerts/{id}` | Detalle y motivo de la alerta |
-
+Todas las rutas van bajo `/api/v1`. Se muestra una versión sintética de los endpoints principales. En cada uno de los services se encontrará la especificación.
 
 ## 6. Gestión del proyecto
 
