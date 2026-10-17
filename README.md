@@ -76,7 +76,7 @@ Ya la nube garantiza el coste de conectividad, la latencia y la disponibilidad, 
 
 | Componente | Responsabilidad | Almacenamiento |
 |---|---|---|
-| [`servicio-ingesta-mediciones`](services/servicio-ingesta-medicamentos) | Recibe mediciones, valida su calidad, las convierte en recursos FHIR para guardarlos y publica un evento | Servidor FHIR |
+| [`servicio-ingesta-mediciones`](services/servicio-ingesta-mediciones) | Recibe mediciones, valida su calidad, las convierte en recursos FHIR para guardarlos y publica un evento | Servidor FHIR |
 | [`servicio-evaluacion-mediciones`](services/servicio-evaluacion-mediciones) | Evalúa cada medición frente a los umbrales y la línea base; calcula estado y tendencia; | Caché (Redis) + FHIR (lectura) + DB (umbrales) |
 | [`servicio-alertas`](services/servicio-alertas) | Revisa el cache a ver si en los ultimos 5 minutos se genero una medición asociada a ese paciente que no cumpliera el umbral, de ser así se dispara el servicio de alertas. Decide a quién avisar y por qué canal | Base de datos de alertas |
 | [`servicio-gestion-pacientes`](services/servicio-gestion-pacientes) | Gestiona pacientes, familiares y umbrales | Servidor FHIR + base de datos |

@@ -1,7 +1,6 @@
 # App de monitoreo y alertas diarias de mediciones personalizada de Salud - FrontEnd
 
 **Autor:** _Edgar Camilo Vargas Aldana_ · **Asignatura:** Cloud Computing: Fundamentos e Infraestructuras <br>
-**Estado actual:** Hito 1 — Definición del proyecto, modelo de negocio y arquitectura de referencia
 
 ---
 
