@@ -43,11 +43,11 @@ Entre otros que podran verse en la siguiente imagen
 
 | Característica esencial | Cómo la aprovecha la aplicación |
 |---|---|
-| **Autoservicio bajo demanda** | Se puede aprovisionar la pagina web, el host (si así se desea), la capa de API Gateway, las funciones, alertas y colas, así como provisionar los servicios de computo para un docker HAPI FHIR Service (incluso el servicio PaaS que ofrecen los diferentes proveedores) de forma autonoma, sin depender del proveedor. <br> A nivel de negocio, una alerta que no llega puede tener consecuencias reales, por lo que se requiere **alta disponibilidad** |
+| **Autoservicio bajo demanda** | La clínica y el administrador puede registrar el dispositivo y el usuario sobre el cual se va a empezar a realizar las mediciones.
 | **Acceso amplio a la red** | El panel web, el reloj y los sistemas externos medicos acceden a los servicios mediante conexiones API REST estándar o de eventos, desde cualquier dispositivo a la plataforma hacia la red. Esto se hará bajo métodos de autenticación para APIs de OAUTH2.0 .|
-| **Asignación común de recursos** | Se pueden tener asignación de una maquina física, en la cual pueda ejecutar cada uno de los servicios que ofrece la plataforma de forma independiente, pudiendo compartir inicialmente máquina física, virtualizando para cada uno de los componentes o servicios que ofrece la aplicación. |
+| **Asignación común de recursos** | Varios pacientes y clinicas usan la misma plataforma, y cada uno de las mediciones corre de forma independiente pero bajo los recursos compartidos y virtualizados. |
 | **Rápida elasticidad** | Las mediciones pueden llegar en **ráfagas** (por ejemplo, tras la medición de la mañana del pacientes) y el resto del día el tráfico es mínimo. Así como varias mediciones por segundo de un mismo dispositivo y de un mismo paciente. <br> El servicio de ingesta de datos deberá escalar horizontalmente durante los picos de mediciones (eventos que llegan de parte de los dispositivos) y se reduce cuando baja la carga. Cada servicio escala de forma independiente. Así como el servicio en donde se van a alojar los datos ( FHIR Service ), que de acuerdo a la cantidad de información que se este ingestando escala horizontal y/o verticalmente. |
-| **Servicio medido** | Se factura por uso (eventos procesados, instancias-hora, alertas enviadas) pudiendo se optimos de acuerdo a la capacidad de computo que se requiera. Teniendo en cuenta la elasticidad, puedo que necesite mayor computo en primeras horas de mañana de mayor mediciones, pero a lo largo del resto del día no se ve la misma cantidad de información, permitiendo medir en que momentos se requiere mayor consumo, y basado en esas mediciones escalar o desescalar los recursos |
+| **Servicio medido** | Se mide por uso (eventos procesados, alertas enviadas) de cada uno de los pacientes, o clinicas donde el paciente este asociado, pudiendo se optimos de acuerdo a la capacidad de computo que se requiera. Teniendo en cuenta la elasticidad, puedo que necesite mayor computo en primeras horas de mañana de mayor mediciones, pero a lo largo del resto del día no se ve la misma cantidad de información, permitiendo medir en que momentos se requiere mayor consumo, y basado en esas mediciones escalar o desescalar los recursos |
 
 ---
 
@@ -56,8 +56,8 @@ Entre otros que podran verse en la siguiente imagen
 | Rol | Quién es en este proyecto |
 |---|---|
 | **Consumidor** | Clínicas, Médicos, Paciente y Familiar que usan la plataforma; el estudiante como gestión y aprovisionamiento de los recursos de nube |
-| **Proveedor** | Proveedor cloud (Microsoft Azure) | Ingresos por uso de eventos, cómputo y almacenamiento; asume el coste de la infraestructura |
-| **Intermediario (broker)** | Servicios de terceros que integran o agregan: servicio FHIR gestionado, pasarela de mensajería (email/SMS), La UGR contrata con Microsoft y administra los diferentes servicios de computo, incluyendo la gestión de accesos |
+| **Proveedor** | Quien ofrece y opera la plataforma 'App de Monitoreo y alerta en salud' desplegado en el Proveedor cloud (Microsoft Azure) |
+| **Intermediario (broker)** | Servicios de terceros que integran o agregan: servicio FHIR gestionado, pasarela de mensajería (email/SMS)|
 | **Auditor** | Auditor externo de seguridad y protección de datos debido a que la información clínica es confidencial |
 | **Operador (carrier)** | Operadoras de red e ISP que conectan relojes, usuarios y la nube (Movistar, Orange, etc.) | Coste de conectividad; condiciona la latencia y la disponibilidad |
 
@@ -66,6 +66,8 @@ Entre otros que podran verse en la siguiente imagen
 No es necesario contar con unas capacidades computo inicialmente fuertes, permitiendo que cuando hayan pocos usuarios se puedan gestionar capacidades bajas de computo, y a medida que ingresen nuevos usuarios se pueda escalar. Así como ingresos por el uso de eventos, si durante el fin de semana no hay mediciones, se puede usar poco computo. 
 
 Ya la nube garantiza el coste de conectividad, la latencia y la disponibilidad, sin estar preocupado por dichas configuraciones de red, que pueden ser costosas por temas de canales dedicados, entre otros.
+
+Asi pues, respecto a las mediciones, tambien a nivel funcional es posible realizar cobros solamente a aquellas clínicas o pacientes que usan la plataforma más frecuentemente.
 
 
 ---
