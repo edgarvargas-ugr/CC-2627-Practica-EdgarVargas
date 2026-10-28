@@ -42,4 +42,8 @@ PUT /api/v1/Patient/p001/thresholds
 - **Historias de usuario:** registradas como Issues con la etiqueta `user-story`, criterios de aceptación y checklist técnico.
 - **Plantillas:** `.github/ISSUE_TEMPLATE/user_story.md` y `.github/PULL_REQUEST_TEMPLATE.md`.
 
+## 4. Implementación
+
+```docker run -d --name servicio-gestion-pacientes -p 8081:80 -e FHIR_BASE_URL=https://hapi.fhir.org/baseR4 -e AzureWebJobsSecretStorageType=Files -v "${PWD}\secrets-host.json:/azure-functions-host/Secrets/host.json" servicio-gestion-pacientes```
+
 ---

@@ -18,3 +18,4 @@ secrets.json
 .env
 .env.*
 !.env.example
+secrets-host.json
