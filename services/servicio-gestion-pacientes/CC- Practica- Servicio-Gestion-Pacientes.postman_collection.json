@@ -1,0 +1,392 @@
+{
+  "info": {
+    "_postman_id": "d7cea37d-435b-4603-a3d9-abf0eb32ef1b",
+    "name": "CC- Practica- Servicio-Gestion-Pacientes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "9631581"
+  },
+  "item": [
+    {
+      "name": "Crear Patient",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-functions-key",
+            "value": "master-clave-larga-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"resourceType\": \"Patient\",\r\n    \"id\":\"DNI11111\",\r\n    \"identifier\": [\r\n        {\r\n            \"type\": {\r\n                \"coding\": [\r\n                    {\r\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/v2-0203\",\r\n                        \"code\": \"NI\"\r\n                    }\r\n                ]\r\n            },\r\n            \"system\": \"urn:app-monitoreo:identificacion\",\r\n            \"value\": \"DNI11111\"\r\n        }\r\n    ],\r\n    \"name\": [\r\n        {\r\n            \"text\": \"Prueba CC Patient\"\r\n        }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:7261/api/v1/Patient",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7261",
+          "path": [
+            "api",
+            "v1",
+            "Patient"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear Practitioner",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-functions-key",
+            "value": "master-clave-larga-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"resourceType\": \"Practitioner\",\r\n    \"id\":\"DNI22222\",\r\n    \"identifier\": [\r\n        {\r\n            \"type\": {\r\n                \"coding\": [\r\n                    {\r\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/v2-0203\",\r\n                        \"code\": \"NI\"\r\n                    }\r\n                ]\r\n            },\r\n            \"system\": \"urn:app-monitoreo:identificacion\",\r\n            \"value\": \"DNI22222\"\r\n        }\r\n    ],\r\n    \"name\": [\r\n        {\r\n            \"text\": \"Prueba CC Medico\"\r\n        }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:7261/api/v1/Practitioner",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7261",
+          "path": [
+            "api",
+            "v1",
+            "Practitioner"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear RelatedPerson",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-functions-key",
+            "value": "master-clave-larga-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"resourceType\": \"RelatedPerson\",\r\n    \"id\":\"DNI44444\",\r\n    \"identifier\": [\r\n        {\r\n            \"type\": {\r\n                \"coding\": [\r\n                    {\r\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/v2-0203\",\r\n                        \"code\": \"NI\"\r\n                    }\r\n                ]\r\n            },\r\n            \"system\": \"urn:app-monitoreo:identificacion\",\r\n            \"value\": \"DNI44444\"\r\n        }\r\n    ],\r\n    \"name\": [\r\n        {\r\n            \"text\": \"Prueba CC Medico\"\r\n        }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:7261/api/v1/RelatedPerson",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7261",
+          "path": [
+            "api",
+            "v1",
+            "RelatedPerson"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Related",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-functions-key",
+            "value": "master-clave-larga-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\r\n    {\"reference\":\"Practitioner/DNI22222\"},\r\n    {\"reference\":\"RelatedPerson/DNI44444\"}\r\n]",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:7261/api/v1/Patient/DNI11111/related",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7261",
+          "path": [
+            "api",
+            "v1",
+            "Patient",
+            "DNI11111",
+            "related"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Device",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-functions-key",
+            "value": "master-clave-larga-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"deviceId\":\"watch-zztest\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:7261/api/v1/Patient/DNI11111/device",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7261",
+          "path": [
+            "api",
+            "v1",
+            "Patient",
+            "DNI11111",
+            "device"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Thresholds",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-functions-key",
+            "value": "master-clave-larga-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"spo2Min\":90,\"heartRateMin\":50,\"heartRateMax\":110,\"condition\":\"COPD\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:7261/api/v1/Patient/DNI11111/thresholds",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7261",
+          "path": [
+            "api",
+            "v1",
+            "Patient",
+            "DNI11111",
+            "thresholds"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Goal",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-functions-key",
+            "value": "master-clave-larga-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"spo2Min\":90,\"heartRateMin\":50,\"heartRateMax\":110,\"condition\":\"COPD\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:7261/api/v1/Goal/DNI11111",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7261",
+          "path": [
+            "api",
+            "v1",
+            "Goal",
+            "DNI11111"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Device",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-functions-key",
+            "value": "master-clave-larga-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"spo2Min\":90,\"heartRateMin\":50,\"heartRateMax\":110,\"condition\":\"COPD\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:7261/api/v1/Device/DNI11111",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7261",
+          "path": [
+            "api",
+            "v1",
+            "Device",
+            "DNI11111"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CareTeam",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-functions-key",
+            "value": "master-clave-larga-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"spo2Min\":90,\"heartRateMin\":50,\"heartRateMax\":110,\"condition\":\"COPD\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:7261/api/v1/CareTeam/DNI11111",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7261",
+          "path": [
+            "api",
+            "v1",
+            "CareTeam",
+            "DNI11111"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Patient",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-functions-key",
+            "value": "master-clave-larga-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"spo2Min\":90,\"heartRateMin\":50,\"heartRateMax\":110,\"condition\":\"COPD\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:7261/api/v1/Patient/DNI11111",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7261",
+          "path": [
+            "api",
+            "v1",
+            "Patient",
+            "DNI11111"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

@@ -22,13 +22,61 @@ El servicio debe enviar siempre el header `x-functions-key` con la clave puesta 
 
 | Verbo | Ruta | Descripción |
 |---|---|---|
-| POST | `/Patient` | Registrar un paciente |
-| GET | `/Patient/{id}` | Consultar perfil |
-| PUT | `/Patient/{id}/thresholds` | Definir umbrales personalizados |
-| POST | `/Patient/{id}/related` | Asociar un cuidador o contacto |
+| POST | `/{recurso}` | Crear un `Patient`, `Practitioner`, `RelatedPerson` |
+| PUT | `/{recurso}/{id}` | Actualizar el recurso |
+| GET | `/{recurso}/{id}` | Consultar un recurso (también `CareTeam`, `Device` y `Goal`) |
+| POST | `/Patient/{id}/related` | Asociar profesionales y familiares al paciente (crea un `CareTeam`) |
+| POST | `/Patient/{id}/device` | Asociar un dispositivo al paciente (crea un `Device`) |
+| POST | `/Patient/{id}/thresholds` | Definir umbrales personalizados (crea un `Goal`) |
+
+Ejemplo: crear un paciente. El `id` y `identifier.value` deben coincidir y contener al menos una letra.
 
 ```json
-PUT /api/v1/Patient/p001/thresholds
+POST /api/v1/Patient
+x-functions-key: <clave>
+
+{
+  "resourceType": "Patient",
+  "id": "DNI11111",
+  "identifier": [
+    {
+      "type": {
+        "coding": [
+          { "system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "NI" }
+        ]
+      },
+      "system": "urn:app-monitoreo:identificacion",
+      "value": "DNI11111"
+    }
+  ],
+  "name": [ { "text": "Prueba CC Patient" } ]
+}
+```
+
+Ejemplo: asociar profesionales y familiares (deben existir antes; `Person` no es válido).
+
+```json
+POST /api/v1/Patient/DNI11111/related
+
+[
+  { "reference": "Practitioner/DNI22222" },
+  { "reference": "RelatedPerson/DNI44444" }
+]
+```
+
+Ejemplo: asociar un dispositivo.
+
+```json
+POST /api/v1/Patient/DNI11111/device
+
+{ "deviceId": "watch-p001" }
+```
+
+Ejemplo: definir umbrales personalizados.
+
+```json
+POST /api/v1/Patient/DNI11111/thresholds
+
 {
   "spo2Min": 90,
   "heartRateMin": 50,
