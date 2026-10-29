@@ -18,6 +18,8 @@ Todas las rutas van bajo `/api/v1`. Se muestra una versión sintética de los en
 
 ### servicio-gestion-pacientes
 
+El servicio debe enviar siempre el header `x-functions-key` con la clave puesta en el archivo secrets-host.json
+
 | Verbo | Ruta | Descripción |
 |---|---|---|
 | POST | `/Patient` | Registrar un paciente |
@@ -43,6 +45,12 @@ PUT /api/v1/Patient/p001/thresholds
 - **Plantillas:** `.github/ISSUE_TEMPLATE/user_story.md` y `.github/PULL_REQUEST_TEMPLATE.md`.
 
 ## 4. Implementación
+
+Primero se construye la imagen basado en el Dockerfile para ello se sugiere el siguiente comando
+
+```docker build -t servicio-gestion-pacientes . ```
+
+Se debe usar secrets-host-template.json y generar el propio secrets-host.json, esto con el fin de darle seguridad al servicio. Una vez ello se levanta el contenedor de la siguiente forma.
 
 ```docker run -d --name servicio-gestion-pacientes -p 8081:80 -e FHIR_BASE_URL=https://hapi.fhir.org/baseR4 -e AzureWebJobsSecretStorageType=Files -v "${PWD}\secrets-host.json:/azure-functions-host/Secrets/host.json" servicio-gestion-pacientes```
 
