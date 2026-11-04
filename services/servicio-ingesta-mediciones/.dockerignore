@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+**/local.settings.json
+**/.env
+**/.env.*
+Dockerfile
+.dockerignore
+README.md
+secrets-host.json
