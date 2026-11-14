@@ -82,7 +82,7 @@ public class ServicioAlertas
             int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587"))
         {
             EnableSsl = true,
-            Credentials = new NetworkCredential(from, Environment.GetEnvironmentVariable("SMTP_PASSWORD"))
+            Credentials = new NetworkCredential(from, (Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? "").Replace(" ", ""))
         };
         await smtp.SendMailAsync(correo);
 
