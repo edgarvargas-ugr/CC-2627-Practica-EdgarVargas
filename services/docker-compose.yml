@@ -1,0 +1,156 @@
+# Entorno local completo: docker compose up -d --build
+# Requiere un archivo .env (copiar desde .env.example).
+
+name: app-monitoreo-salud
+
+services:
+  # ---------- Datos ----------
+  bd-fhir:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${FHIR_DB_NAME}
+      POSTGRES_USER: ${FHIR_DB_USER}
+      POSTGRES_PASSWORD: ${FHIR_DB_PASSWORD}
+    volumes:
+      - bd-fhir-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [red-datos]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [red-datos]
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    restart: unless-stopped
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data --skipApiVersionCheck
+    ports:
+      - "${AZURITE_BLOB_PORT}:10000"
+      - "${AZURITE_QUEUE_PORT}:10001"
+      - "${AZURITE_TABLE_PORT}:10002"
+    volumes:
+      - azurite-data:/data
+    networks: [red-datos, red-publica]
+
+  fhir-service:
+    image: ${HAPI_IMAGE}
+    restart: unless-stopped
+    environment:
+      FHIR_DB_HOST: bd-fhir
+      FHIR_DB_PORT: "5432"
+      FHIR_DB_NAME: ${FHIR_DB_NAME}
+      FHIR_DB_USER: ${FHIR_DB_USER}
+      FHIR_DB_PASSWORD: ${FHIR_DB_PASSWORD}
+    volumes:
+      - ./fhir-service/config/hapi.application.yaml:/app/config/application.yaml:ro
+    ports:
+      - "${FHIR_PORT}:8080"
+    depends_on:
+      bd-fhir:
+        condition: service_healthy
+    networks: [red-datos, red-publica]
+
+  # ---------- Microservicios ----------
+  servicio-gestion-pacientes:
+    build: ./servicio-gestion-pacientes
+    restart: unless-stopped
+    environment:
+      FHIR_BASE_URL: http://fhir-service:8080/fhir
+      AzureWebJobsSecretStorageType: Files
+    configs:
+      - source: functions-host-secrets
+        target: /azure-functions-host/Secrets/host.json
+    ports:
+      - "${GESTION_PACIENTES_PORT}:80"
+    depends_on:
+      - fhir-service
+    networks: [red-datos, red-publica]
+
+  servicio-ingesta-mediciones:
+    build: ./servicio-ingesta-mediciones
+    restart: unless-stopped
+    environment:
+      FHIR_BASE_URL: http://fhir-service:8080/fhir
+      AzureWebJobsStorage: ${AZURITE_CONNECTION}
+      AzureWebJobsSecretStorageType: Files
+    configs:
+      - source: functions-host-secrets
+        target: /azure-functions-host/Secrets/host.json
+    ports:
+      - "${INGESTA_PORT}:80"
+    depends_on:
+      - fhir-service
+      - azurite
+    networks: [red-datos, red-publica]
+
+  servicio-evaluacion-mediciones:
+    build: ./servicio-evaluacion-mediciones
+    restart: unless-stopped
+    environment:
+      AzureWebJobsStorage: ${AZURITE_CONNECTION}
+      SERVICIO_GESTION_PACIENTES: http://servicio-gestion-pacientes/api/v1/
+      PACIENTES_FUNCTIONS_KEY: ${FUNCTIONS_MASTER_KEY}
+      REDIS_CONNECTION: redis:6379
+      AzureWebJobsSecretStorageType: Files
+    depends_on:
+      redis:
+        condition: service_healthy
+      azurite:
+        condition: service_started
+      servicio-gestion-pacientes:
+        condition: service_started
+    networks: [red-datos]
+
+  servicio-alertas:
+    build: ./servicio-alertas
+    restart: unless-stopped
+    environment:
+      AzureWebJobsStorage: ${AZURITE_CONNECTION}
+      SERVICIO_GESTION_PACIENTES: http://servicio-gestion-pacientes/api/v1/
+      PACIENTES_FUNCTIONS_KEY: ${FUNCTIONS_MASTER_KEY}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      AzureWebJobsSecretStorageType: Files
+    depends_on:
+      - azurite
+      - servicio-gestion-pacientes
+    # red-publica le da salida a internet para el SMTP
+    networks: [red-datos, red-publica]
+
+# La clave de las Functions se genera desde el .env (no hace falta un secrets-host.json)
+configs:
+  functions-host-secrets:
+    content: |
+      {
+        "masterKey": { "name": "master", "value": "${FUNCTIONS_MASTER_KEY}", "encrypted": false },
+        "functionKeys": [],
+        "systemKeys": []
+      }
+
+networks:
+  # Aislada: sin salida a internet ni acceso desde el equipo. Aquí viven las bases de datos.
+  red-datos:
+    internal: true
+  # Red con salida a internet y publicación de puertos hacia el equipo.
+  red-publica:
+
+volumes:
+  bd-fhir-data:
+  redis-data:
+  azurite-data:
