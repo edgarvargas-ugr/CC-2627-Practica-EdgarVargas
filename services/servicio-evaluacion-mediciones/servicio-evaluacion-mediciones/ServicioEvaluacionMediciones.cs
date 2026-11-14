@@ -74,30 +74,37 @@ public class ServicioEvaluacionMediciones
         // Buscar si tiene umbrales personalizados en el servicio de gestión de pacientes
         double spo2Min = DefSpo2Min, fcMin = DefFcMin, fcMax = DefFcMax;
 
-        using var rg = await _servicioGestionPacientesUrl.GetAsync($"Goal/{Uri.EscapeDataString(paciente)}");
-        if (rg.IsSuccessStatusCode)
+        try
         {
-            using var goal = JsonDocument.Parse(await rg.Content.ReadAsStringAsync());
-            if (goal.RootElement.TryGetProperty("target", out var targets))
+            using var rg = await _servicioGestionPacientesUrl.GetAsync($"Goal/{Uri.EscapeDataString(paciente)}");
+            if (rg.IsSuccessStatusCode)
             {
-                foreach (var t in targets.EnumerateArray())
+                using var goal = JsonDocument.Parse(await rg.Content.ReadAsStringAsync());
+                if (goal.RootElement.TryGetProperty("target", out var targets))
                 {
-                    var codigo = t.GetProperty("measure").GetProperty("coding")[0].GetProperty("code").GetString();
-                    if (!t.TryGetProperty("detailRange", out var rango)) continue;
-
-                    if (rango.TryGetProperty("low", out var low))
+                    foreach (var t in targets.EnumerateArray())
                     {
-                        if (codigo == "59408-5") spo2Min = low.GetProperty("value").GetDouble();
-                        else if (codigo == "8867-4") fcMin = low.GetProperty("value").GetDouble();
+                        var codigo = t.GetProperty("measure").GetProperty("coding")[0].GetProperty("code").GetString();
+                        if (!t.TryGetProperty("detailRange", out var rango)) continue;
+
+                        if (rango.TryGetProperty("low", out var low))
+                        {
+                            if (codigo == "59408-5") spo2Min = low.GetProperty("value").GetDouble();
+                            else if (codigo == "8867-4") fcMin = low.GetProperty("value").GetDouble();
+                        }
+                        if (codigo == "8867-4" && rango.TryGetProperty("high", out var high))
+                            fcMax = high.GetProperty("value").GetDouble();
                     }
-                    if (codigo == "8867-4" && rango.TryGetProperty("high", out var high))
-                        fcMax = high.GetProperty("value").GetDouble();
                 }
             }
+            else if (rg.StatusCode != HttpStatusCode.NotFound)
+            {
+                _logger.LogWarning("Gestion de pacientes respondio {Status} al consultar umbrales; se usan los valores por defecto", rg.StatusCode);
+            }
         }
-        else if (rg.StatusCode != HttpStatusCode.NotFound)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            rg.EnsureSuccessStatusCode();
+            _logger.LogWarning(ex, "No se pudo consultar gestion de pacientes; se usan los umbrales por defecto");
         }
 
         if (spo2 >= spo2Min && fc >= fcMin && fc <= fcMax) return;
