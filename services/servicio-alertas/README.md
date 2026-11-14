@@ -99,7 +99,7 @@ Una vez ello se levanta el contenedor de la siguiente forma.
   -e SERVICIO_GESTION_PACIENTES=http://host.docker.internal:8081/api/v1/ `
   -e PACIENTES_FUNCTIONS_KEY=clave-master-cc-ugr `
   -e SMTP_USER=tu-cuenta@gmail.com `
-  -e SMTP_PASSWORD=contraseña-de-aplicacion `
+  -e "SMTP_PASSWORD=abcd efgh ijkl mnop" `
   -e AzureWebJobsSecretStorageType=Files `
   servicio-alertas```
 
