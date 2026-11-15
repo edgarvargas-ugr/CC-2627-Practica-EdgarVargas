@@ -1,7 +1,8 @@
 # App de monitoreo y alertas diarias de mediciones personalizada de Salud
 
 **Autor:** _Edgar Camilo Vargas Aldana_ · **Asignatura:** Cloud Computing: Fundamentos e Infraestructuras <br>
-**Estado actual:** Hito 1 — Definición del proyecto, modelo de negocio y arquitectura de referencia
+**Estado actual:** Hito 2: Empaquetado Cloud Native, Entorno Local e Integración Continua (CI) — [Documentación del Hito 2](services/README.md) <br>
+**Hito anterior (completado):** Hito 1 — Definición del proyecto, modelo de negocio y arquitectura de referencia
 
 ---
 

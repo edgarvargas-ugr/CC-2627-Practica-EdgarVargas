@@ -165,7 +165,7 @@ El workflow `.github/workflows/ci.yml` se ejecuta con cada `push` y `pull_reques
 |---|---|
 | `calidad` | Por cada microservicio: linter de Dockerfile (**Hadolint**) y análisis estático de C# compilando en `Release` con advertencias como error |
 | `lint-compose` | Valida la sintaxis del compose con `docker compose config` usando `.env.example` |
-| `pruebas-unitarias` | Ejecuta `dotnet test` sobre los proyectos `*Tests.csproj` que existan |
+| `pruebas-unitarias` | Ejecuta `dotnet test` sobre los proyectos `*Tests.csproj` que existan. Hoy no hay ninguno, por lo que no ejecuta pruebas (están documentadas en los issues, aún no automatizadas) |
 | `pruebas-integracion` | Levanta el compose completo en el runner y verifica FHIR, creación de un paciente en gestión y registro y consulta de una medición en ingesta; al terminar borra el entorno |
 | `publicar` | Solo en `push`, después de pasar todo lo anterior: construye cada imagen y la publica en **GitHub Container Registry** (`ghcr.io/<repositorio>/<servicio>`) |
 
@@ -188,11 +188,35 @@ Ejemplo para descargar una imagen:
 docker pull ghcr.io/edgarvargas-ugr/cc-2627-practica-edgarvargas/servicio-alertas:latest
 ```
 
-> Los paquetes de GHCR se crean como privados. Para descargarlos sin iniciar sesión hay que cambiar su visibilidad a pública en *Package settings → Danger Zone → Change visibility*; si siguen privados, se necesita `docker login ghcr.io` con un token con permiso `read:packages`.
-
 ## 6. Documentación de las historias de usuario
 
-La documentación detallada de cada entrega, incluidas las evidencias de las **pruebas unitarias**, está en cada uno de los *issues* cerrados del proyecto (historias de usuario, etiqueta `user-story`).
+La documentación detallada de cada entrega está en cada uno de los *issues* cerrados del proyecto (historias de usuario, etiqueta `user-story`). **Las pruebas realizadas están documentadas en los comentarios de cada issue.**
+
+> **Nota:** las pruebas unitarias están documentadas en los issues, pero **aún no están automatizadas**: hoy el repositorio no tiene proyectos de prueba y, por eso, el trabajo `pruebas-unitarias` del CI no ejecuta ninguna. La única prueba automatizada es la de integración sobre el compose completo.
+
+### Issues cerrados (historias de usuario)
+
+| Issue | Historia de usuario |
+|---|---|
+| [#1](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/issues/1) | Documentar arquitectura de los servicios necesarios |
+| [#2](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/issues/2) | Crear servicio de ingesta de mediciones |
+| [#3](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/issues/3) | Desplegar servicio docker FHIR |
+| [#4](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/issues/4) | Crear servicio de gestión de pacientes |
+| [#5](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/issues/5) | Crear servicio de evaluación de mediciones |
+| [#6](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/issues/6) | Crear servicio de alertamiento |
+| [#14](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/issues/14) | Emulador de colas (Uso de Azurite docker) |
+| [#15](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/issues/15) | Emulador de Redis Cache |
+
+### Pull Requests
+
+| PR | Descripción |
+|---|---|
+| [#12](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/pull/12) | Feature/fhir service |
+| [#13](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/pull/13) | Feature/servicio gestion pacientes |
+| [#16](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/pull/16) | Feature/servicio ingesta mediciones |
+| [#17](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/pull/17) | docs: Se documenta en como se utiliza este docker para poder emular local las colas |
+| [#18](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/pull/18) | Feature/servicio evaluacion mediciones |
+| [#19](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/pull/19) | feat: Servicio de alertas incluido el docker y la documentación |
 
 ## 7. Gestión del proyecto
 - **Estrategia de ramas:** `main` protegida; el trabajo se integra mediante *feature branches* (`feature/<servicio>-<descripcion>`) y Pull Requests.
