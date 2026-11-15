@@ -1,0 +1,205 @@
+name: CI
+
+# Se ejecuta en cada push / pull request a main y en los tags de versión (v1.2.3).
+# Las imágenes solo se publican en push (no en pull requests) y después de pasar todas las pruebas.
+on:
+  push:
+    branches: [main]
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  # ---------------------------------------------------------------- 1. Calidad
+  calidad:
+    name: Linters (${{ matrix.servicio }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        servicio:
+          - servicio-gestion-pacientes
+          - servicio-ingesta-mediciones
+          - servicio-evaluacion-mediciones
+          - servicio-alertas
+    steps:
+      - uses: actions/checkout@v4
+
+      # Linter de sintaxis y buenas prácticas del Dockerfile
+      - name: Hadolint (Dockerfile)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: services/${{ matrix.servicio }}/Dockerfile
+          failure-threshold: error
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # Linter de código C#: el compilador con los analizadores de .NET y advertencias como error.
+      # CS8602 (nulabilidad) se excluye porque servicio-gestion-pacientes ya tiene 2 avisos pendientes.
+      - name: Análisis estático de C# (advertencias como error)
+        run: >
+          dotnet build services/${{ matrix.servicio }}/${{ matrix.servicio }}/${{ matrix.servicio }}.csproj
+          -c Release -warnaserror -p:WarningsNotAsErrors=CS8602
+
+  lint-compose:
+    name: Linter del docker-compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar sintaxis del compose con el .env.example
+        working-directory: services
+        run: |
+          cp .env.example .env
+          docker compose config -q
+
+  # ------------------------------------------------------- 2. Pruebas unitarias
+  pruebas-unitarias:
+    name: Pruebas unitarias
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: dotnet test
+        run: |
+          proyectos=$(find services -name '*Tests.csproj' -not -path '*/obj/*')
+          if [ -z "$proyectos" ]; then
+            echo "::notice::No hay proyectos de prueba (*Tests.csproj) en el repositorio; no se ejecutó ninguna prueba unitaria."
+            exit 0
+          fi
+          for p in $proyectos; do dotnet test "$p" -c Release --logger "trx;LogFileName=resultados.trx"; done
+
+  # ------------------------------------------------------ 3. Pruebas de integración
+  pruebas-integracion:
+    name: Pruebas de integración (docker compose)
+    needs: [calidad, lint-compose, pruebas-unitarias]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: services
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Levantar el entorno completo
+        run: |
+          cp .env.example .env
+          docker compose up -d --build
+
+      - name: Prueba de integración (FHIR, gestión de pacientes e ingesta)
+        run: |
+          set -euo pipefail
+          set -a; . ./.env; set +a
+          FHIR="http://localhost:${FHIR_PORT}/fhir"
+          GESTION="http://localhost:${GESTION_PACIENTES_PORT}/api/v1"
+          INGESTA="http://localhost:${INGESTA_PORT}/api/v1"
+          PACIENTE="DNI99999"
+
+          esperar() {
+            echo "Esperando $1..."
+            for _ in $(seq 1 90); do
+              codigo=$(curl -s -o /dev/null -w '%{http_code}' -H "x-functions-key: $FUNCTIONS_MASTER_KEY" "$2" || true)
+              if [ "$codigo" != "000" ] && [ "$codigo" -lt 500 ]; then echo "  $1 listo ($codigo)"; return 0; fi
+              sleep 4
+            done
+            echo "ERROR: $1 no respondió a tiempo"; return 1
+          }
+
+          esperar fhir-service "$FHIR/metadata"
+          esperar servicio-gestion-pacientes "$GESTION/Patient/$PACIENTE"
+          esperar servicio-ingesta-mediciones "$INGESTA/Patient/$PACIENTE/mediciones"
+
+          # 1) Crear paciente a través de servicio-gestion-pacientes
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$GESTION/Patient" \
+            -H "x-functions-key: $FUNCTIONS_MASTER_KEY" -H 'Content-Type: application/json' \
+            -d "{\"resourceType\":\"Patient\",\"id\":\"$PACIENTE\",\"identifier\":[{\"system\":\"urn:app-monitoreo:identificacion\",\"value\":\"$PACIENTE\"}],\"name\":[{\"text\":\"Paciente de prueba\"}]}")
+          case "$codigo" in 200|201) echo "OK crear paciente ($codigo)";; *) echo "FALLO crear paciente ($codigo)"; exit 1;; esac
+
+          # 2) Registrar una medición dentro de rango a través de servicio-ingesta-mediciones
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$INGESTA/mediciones/dispositivo" \
+            -H 'Content-Type: application/json' \
+            -d "{\"pacienteId\":\"$PACIENTE\",\"spo2\":97,\"frecuenciaCardiaca\":72,\"fecha\":\"$(date -u +%Y-%m-%dT%H:%M:%S+00:00)\"}")
+          [ "$codigo" = "201" ] && echo "OK registrar medición ($codigo)" || { echo "FALLO registrar medición ($codigo)"; exit 1; }
+
+          # 3) La medición debe poder consultarse de vuelta (HAPI indexa de forma asíncrona)
+          for _ in $(seq 1 10); do
+            if curl -s -H "x-functions-key: $FUNCTIONS_MASTER_KEY" "$INGESTA/Patient/$PACIENTE/mediciones" \
+                 | grep -Eq '"resourceType" *: *"Observation"'; then
+              echo "OK la medición se consulta de vuelta"; exit 0
+            fi
+            sleep 3
+          done
+          echo "FALLO: la medición no apareció al consultarla"; exit 1
+
+      - name: Logs de los contenedores (solo si falla)
+        if: failure()
+        run: docker compose logs --no-color --tail 200
+
+      - name: Apagar el entorno y borrar volúmenes
+        if: always()
+        run: docker compose down -v
+
+  # ------------------------------------------------------------ 4. Publicación
+  publicar:
+    name: Publicar ${{ matrix.servicio }} en GHCR
+    needs: pruebas-integracion
+    # Solo en push (rama main o tags de versión); nunca en pull requests
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        servicio:
+          - servicio-gestion-pacientes
+          - servicio-ingesta-mediciones
+          - servicio-evaluacion-mediciones
+          - servicio-alertas
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Iniciar sesión en GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Etiquetas: hash corto del commit, versión semántica (si se empuja un tag vX.Y.Z) y latest en main
+      - name: Metadatos de la imagen
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.servicio }}
+          tags: |
+            type=sha,format=short
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Construir y publicar
+        uses: docker/build-push-action@v6
+        with:
+          context: services/${{ matrix.servicio }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.servicio }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.servicio }}

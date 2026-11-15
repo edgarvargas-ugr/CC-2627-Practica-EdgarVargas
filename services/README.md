@@ -156,7 +156,25 @@ Tras tres mediciones fuera de rango en menos de 3 minutos, `servicio-evaluacion-
 
 ![Correo de alerta recibido](../docs/img/compose-prueba-email.png)
 
-## 5. Gestión del proyecto
+## 5. Integración continua (CI)
+
+El workflow `.github/workflows/ci.yml` se ejecuta con cada `push` y `pull_request` a `main` (y con los tags `vX.Y.Z`):
+
+| Trabajo | Qué hace |
+|---|---|
+| `calidad` | Por cada microservicio: linter de Dockerfile (**Hadolint**) y análisis estático de C# compilando en `Release` con advertencias como error |
+| `lint-compose` | Valida la sintaxis del compose con `docker compose config` usando `.env.example` |
+| `pruebas-unitarias` | Ejecuta `dotnet test` sobre los proyectos `*Tests.csproj` que existan |
+| `pruebas-integracion` | Levanta el compose completo en el runner y verifica FHIR, creación de un paciente en gestión y registro y consulta de una medición en ingesta; al terminar borra el entorno |
+| `publicar` | Solo en `push`, después de pasar todo lo anterior: construye cada imagen y la publica en **GitHub Container Registry** (`ghcr.io/<repositorio>/<servicio>`) |
+
+Etiquetas de las imágenes: hash corto del commit (`sha-xxxxxxx`), versión semántica cuando se empuja un tag `vX.Y.Z` y `latest` para la rama `main`.
+
+## 6. Documentación de las historias de usuario
+
+La documentación detallada de cada entrega, incluidas las evidencias de las **pruebas unitarias**, está en cada uno de los *issues* cerrados del proyecto (historias de usuario, etiqueta `user-story`).
+
+## 7. Gestión del proyecto
 - **Estrategia de ramas:** `main` protegida; el trabajo se integra mediante *feature branches* (`feature/<servicio>-<descripcion>`) y Pull Requests.
 - **Commits semánticos:** `feat:`, `fix:`, `docs:`, `refactor:`, con ámbito opcional, por ejemplo `feat(ingestion): valida lecturas fuera de rango`.
 - **Tablero:** GitHub Projects con vistas agrupadas por Milestones.
