@@ -94,7 +94,7 @@ Primero se construye la imagen basado en el Dockerfile para ello se sugiere el s
 Una vez ello se levanta el contenedor de la siguiente forma.
 
 ```docker run -d --name servicio-alertas `
-  -p 8087:80 `
+  -p 8087:8080 `
   -e "AzureWebJobsStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://host.docker.internal:11000/devstoreaccount1;QueueEndpoint=http://host.docker.internal:11001/devstoreaccount1;TableEndpoint=http://host.docker.internal:11002/devstoreaccount1;" `
   -e SERVICIO_GESTION_PACIENTES=http://host.docker.internal:8081/api/v1/ `
   -e PACIENTES_FUNCTIONS_KEY=clave-master-cc-ugr `

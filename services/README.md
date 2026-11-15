@@ -76,6 +76,7 @@ services/
 5. **Orden de arranque.** `bd-fhir` y `redis` tienen `healthcheck` (`pg_isready` y `redis-cli ping`) y los servicios que dependen de ellos esperan con `depends_on: condition: service_healthy`. `fhir-service` no arranca hasta que la base de datos acepta conexiones.
 6. **Clave de las Azure Functions sin archivo.** Antes cada servicio montaba un `secrets-host.json`. Ahora el compose lo genera con `configs: content:` a partir de `FUNCTIONS_MASTER_KEY`, y esa misma variable se envía como `PACIENTES_FUNCTIONS_KEY` a evaluación y alertas. Así hay una única clave y nada que copiar a mano.
 7. **Solo se publican los puertos que se usan desde fuera.** Evaluación y alertas se activan por cola y no tienen endpoints HTTP, por lo que no exponen puerto.
+8. **Imágenes con mínimo privilegio.** Los 4 Dockerfile son multietapa (compilación con `dotnet/sdk:8.0-alpine`, ejecución con la imagen oficial `azure-functions/dotnet-isolated`), ejecutan bajo el usuario no root `app` (UID 1654, creado en la imagen base) y declaran `EXPOSE 8080`. Como un usuario sin privilegios no puede escuchar en el puerto 80, el host de Functions se movió al 8080 con `ASPNETCORE_URLS`; por eso el compose publica `${PUERTO}:8080` y las llamadas entre servicios usan `http://servicio-gestion-pacientes:8080/api/v1/`. El puerto del equipo (8081, 8082...) no cambia.
 
 ### Variables de entorno (`.env.example`)
 
@@ -169,6 +170,25 @@ El workflow `.github/workflows/ci.yml` se ejecuta con cada `push` y `pull_reques
 | `publicar` | Solo en `push`, después de pasar todo lo anterior: construye cada imagen y la publica en **GitHub Container Registry** (`ghcr.io/<repositorio>/<servicio>`) |
 
 Etiquetas de las imágenes: hash corto del commit (`sha-xxxxxxx`), versión semántica cuando se empuja un tag `vX.Y.Z` y `latest` para la rama `main`.
+
+### Imágenes publicadas en GitHub Container Registry
+
+Workflow: [`ci.yml`](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/blob/main/.github/workflows/ci.yml) · Ejecuciones: [GitHub Actions](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/actions/workflows/ci.yml) · Corrida exitosa que publicó las 4 imágenes: [run 43657464243](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/actions/runs/43657464243) · Todos los paquetes del repositorio: [Packages](https://github.com/edgarvargas-ugr?tab=packages&repo_name=CC-2627-Practica-EdgarVargas)
+
+| Microservicio | Paquete en GHCR | Imagen |
+|---|---|---|
+| `servicio-gestion-pacientes` | [ver paquete](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/pkgs/container/cc-2627-practica-edgarvargas%2Fservicio-gestion-pacientes) | `ghcr.io/edgarvargas-ugr/cc-2627-practica-edgarvargas/servicio-gestion-pacientes` |
+| `servicio-ingesta-mediciones` | [ver paquete](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/pkgs/container/cc-2627-practica-edgarvargas%2Fservicio-ingesta-mediciones) | `ghcr.io/edgarvargas-ugr/cc-2627-practica-edgarvargas/servicio-ingesta-mediciones` |
+| `servicio-evaluacion-mediciones` | [ver paquete](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/pkgs/container/cc-2627-practica-edgarvargas%2Fservicio-evaluacion-mediciones) | `ghcr.io/edgarvargas-ugr/cc-2627-practica-edgarvargas/servicio-evaluacion-mediciones` |
+| `servicio-alertas` | [ver paquete](https://github.com/edgarvargas-ugr/CC-2627-Practica-EdgarVargas/pkgs/container/cc-2627-practica-edgarvargas%2Fservicio-alertas) | `ghcr.io/edgarvargas-ugr/cc-2627-practica-edgarvargas/servicio-alertas` |
+
+Ejemplo para descargar una imagen:
+
+```powershell
+docker pull ghcr.io/edgarvargas-ugr/cc-2627-practica-edgarvargas/servicio-alertas:latest
+```
+
+> Los paquetes de GHCR se crean como privados. Para descargarlos sin iniciar sesión hay que cambiar su visibilidad a pública en *Package settings → Danger Zone → Change visibility*; si siguen privados, se necesita `docker login ghcr.io` con un token con permiso `read:packages`.
 
 ## 6. Documentación de las historias de usuario
 

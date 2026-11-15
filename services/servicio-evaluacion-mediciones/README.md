@@ -100,7 +100,7 @@ Primero se construye la imagen basado en el Dockerfile para ello se sugiere el s
 Se debe usar secrets-host-template.json y generar el propio secrets-host.json, esto con el fin de darle seguridad al servicio. Una vez ello se levanta el contenedor de la siguiente forma.
 
 ```docker run -d --name servicio-evaluacion-mediciones `
-  -p 8086:80 `
+  -p 8086:8080 `
   -e "AzureWebJobsStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://host.docker.internal:11000/devstoreaccount1;QueueEndpoint=http://host.docker.internal:11001/devstoreaccount1;TableEndpoint=http://host.docker.internal:11002/devstoreaccount1;" `
   -e SERVICIO_GESTION_PACIENTES=http://host.docker.internal:8081/api/v1/ `
   -e REDIS_CONNECTION=host.docker.internal:6379 `

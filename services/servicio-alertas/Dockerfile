@@ -12,7 +12,13 @@ RUN dotnet publish servicio-alertas/servicio-alertas.csproj -c Release -o /home/
 FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0
 ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
     AzureFunctionsJobHost__Logging__Console__IsEnabled=true \
-	AzureWebJobsSecretStorageType=Files
+    AzureWebJobsSecretStorageType=Files \
+    ASPNETCORE_URLS=http://+:8080
 
-COPY --from=build /home/site/wwwroot /home/site/wwwroot
+# Puerto sin privilegios: un usuario no root no puede escuchar en el 80
+EXPOSE 8080
 
+COPY --from=build --chown=app:app /home/site/wwwroot /home/site/wwwroot
+
+# Minimo privilegio: el usuario "app" (UID 1654) viene creado en la imagen base
+USER app

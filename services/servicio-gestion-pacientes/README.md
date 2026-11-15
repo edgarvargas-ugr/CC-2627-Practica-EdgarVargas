@@ -100,6 +100,6 @@ Primero se construye la imagen basado en el Dockerfile para ello se sugiere el s
 
 Se debe usar secrets-host-template.json y generar el propio secrets-host.json, esto con el fin de darle seguridad al servicio. Una vez ello se levanta el contenedor de la siguiente forma.
 
-```docker run -d --name servicio-gestion-pacientes -p 8081:80 -e FHIR_BASE_URL=https://hapi.fhir.org/baseR4 -e AzureWebJobsSecretStorageType=Files -v "${PWD}\secrets-host.json:/azure-functions-host/Secrets/host.json" servicio-gestion-pacientes```
+```docker run -d --name servicio-gestion-pacientes -p 8081:8080 -e FHIR_BASE_URL=https://hapi.fhir.org/baseR4 -e AzureWebJobsSecretStorageType=Files -v "${PWD}\secrets-host.json:/azure-functions-host/Secrets/host.json" servicio-gestion-pacientes```
 
 ---
