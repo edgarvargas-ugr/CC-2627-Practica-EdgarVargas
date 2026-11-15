@@ -130,20 +130,23 @@ jobs:
           case "$codigo" in 200|201) echo "OK crear paciente ($codigo)";; *) echo "FALLO crear paciente ($codigo)"; exit 1;; esac
 
           # 2) Registrar una medición dentro de rango a través de servicio-ingesta-mediciones
-          codigo=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$INGESTA/mediciones/dispositivo" \
+          respuesta=$(curl -s -w '\n%{http_code}' -X POST "$INGESTA/mediciones/dispositivo" \
             -H 'Content-Type: application/json' \
             -d "{\"pacienteId\":\"$PACIENTE\",\"spo2\":97,\"frecuenciaCardiaca\":72,\"fecha\":\"$(date -u +%Y-%m-%dT%H:%M:%S+00:00)\"}")
-          [ "$codigo" = "201" ] && echo "OK registrar medición ($codigo)" || { echo "FALLO registrar medición ($codigo)"; exit 1; }
+          codigo="${respuesta##*$'\n'}"
+          cuerpo="${respuesta%$'\n'*}"
+          echo "Respuesta de ingesta ($codigo): $cuerpo"
+          [ "$codigo" = "201" ] || { echo "FALLO registrar medición ($codigo)"; exit 1; }
+          echo "OK registrar medición ($codigo)"
 
-          # 3) La medición debe poder consultarse de vuelta (HAPI indexa de forma asíncrona)
-          for _ in $(seq 1 10); do
-            if curl -s -H "x-functions-key: $FUNCTIONS_MASTER_KEY" "$INGESTA/Patient/$PACIENTE/mediciones" \
-                 | grep -Eq '"resourceType" *: *"Observation"'; then
-              echo "OK la medición se consulta de vuelta"; exit 0
-            fi
-            sleep 3
+          # 3) Los recursos guardados (recursosFhir) deben leerse por id desde servicio-gestion-pacientes
+          ids=$(echo "$cuerpo" | grep -o '"[0-9][0-9]*"' | tr -d '"' || true)
+          [ -n "$ids" ] || { echo "FALLO: la respuesta no trae ids en recursosFhir"; exit 1; }
+          for id in $ids; do
+            codigo=$(curl -s -o /dev/null -w '%{http_code}' -H "x-functions-key: $FUNCTIONS_MASTER_KEY" "$GESTION/Observation/$id")
+            [ "$codigo" = "200" ] || { echo "FALLO: Observation/$id no se pudo leer desde gestión ($codigo)"; exit 1; }
+            echo "OK Observation/$id se lee por id desde gestión ($codigo)"
           done
-          echo "FALLO: la medición no apareció al consultarla"; exit 1
 
       - name: Logs de los contenedores (solo si falla)
         if: failure()
